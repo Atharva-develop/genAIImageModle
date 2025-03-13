@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Camera Capture and OCR</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         #result {
             font-size: 18px;
@@ -13,10 +14,14 @@
             color: #333;
             white-space: pre-wrap;
             border: 1px solid #ccc;
+            border-radius: 8px;
             padding: 10px;
-            width: 320px;
+            width: 1320px;
+            height: 220px;
             min-height: 100px;
             background-color: #f9f9f9;
+            margin-top: -255px;
+            margin-left: 19.3%;
         }
 
         #AIResult {
@@ -48,17 +53,30 @@
         button:hover {
             background-color: #218838;
         }
+
+        #AIResultContainer{
+            display: flex;
+            justify-content: center;
+        }
+
+        #AIResult{
+            background-color: black;
+            color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            height: 500px;
+        }
     </style>
 </head>
 
 <body>
-    <h1>Capture Image from Camera and Send to API</h1>
+    <h1>Capture Image from Camera and it will Detect the Text in it</h1>
 
     <!-- Video stream -->
     <video id="video" autoplay></video>
 
     <!-- Capture and Upload Buttons -->
-    <button id="capture">Capture</button>
+    <button id="capture"><i class="fa-solid fa-camera"></i></button>
     <button id="upload" style="display: none;">Upload</button>
 
     <!-- Canvas to hold the captured image -->
@@ -69,6 +87,7 @@
 
     <!-- Display extracted text -->
     <div id="result">Extracted text will appear here...</div>
+    <div id="AIResultContainer"></div>
     <div id="AIResult">AI results will appear here...</div>
 
     <script>
@@ -99,11 +118,12 @@
 
             // Show captured image
             const imageUrl = canvas.toDataURL('image/png');
-            preview.src = imageUrl;
-            preview.style.display = 'block';
+            // preview.src = imageUrl;
+           // preview.style.display = 'block';
 
             // Enable upload button
-            uploadButton.style.display = 'inline';
+            //uploadButton.style.display = 'inline';
+            uploadButton.click();
         });
 
         // Upload captured image to OCR API
