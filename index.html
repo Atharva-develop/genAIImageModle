@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Camera Capture and OCR</title>
+    <style>
+        #result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #333;
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 320px;
+            min-height: 100px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Capture Image from Camera and Send to API</h1>
+    
+    <!-- Video stream -->
+    <video id="video" width="320" height="240" autoplay></video>
+    
+    <!-- Capture and Upload Buttons -->
+    <button id="capture">Capture</button>
+    <button id="upload" style="display: none;">Upload</button>
+    
+    <!-- Canvas to hold the captured image -->
+    <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+    
+    <!-- Display captured image -->
+    <img id="preview" style="display: none; width: 320px; height: 240px;" />
+    
+    <!-- Display extracted text -->
+    <div id="result">Extracted text will appear here...</div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const uploadButton = document.getElementById('upload');
+        const preview = document.getElementById('preview');
+        const resultDiv = document.getElementById('result');
+
+        // Open camera
+        async function openCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error("Error accessing camera:", error);
+            }
+        }
+
+        // Capture image from camera
+        captureButton.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Show captured image
+            const imageUrl = canvas.toDataURL('image/png');
+            preview.src = imageUrl;
+            preview.style.display = 'block';
+
+            // Enable upload button
+            uploadButton.style.display = 'inline';
+        });
+
+        // Upload captured image to API
+        uploadButton.addEventListener('click', () => {
+            canvas.toBlob((blob) => {
+                const myHeaders = new Headers();
+                myHeaders.append("apikey", "K81478632188957");
+
+                const formdata = new FormData();
+                formdata.append("file", blob, "captured-image.png");
+                formdata.append("scale", "true");
+
+                const requestOptions = {
+                    method: "POST",
+                    headers: myHeaders,
+                    body: formdata,
+                    redirect: "follow"
+                };
+
+                // Send the file to the API
+                fetch("https://api.ocr.space/parse/image", requestOptions)
+                    .then((response) => response.json())
+                    .then((result) => {
+                        console.log(result);
+                        // Extract and show the "ParsedText" value
+                        const parsedText = result?.ParsedResults?.[0]?.ParsedText || "No text detected";
+                        resultDiv.textContent = parsedText;
+                    })
+                    .catch((error) => {
+                        console.error("Error:", error);
+                        resultDiv.textContent = "Error while processing the image.";
+                    });
+            }, "image/png");
+        });
+
+        // Start camera when the page loads
+        openCamera();
+    </script>
+</body>
+</html>
