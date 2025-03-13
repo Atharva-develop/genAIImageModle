@@ -76,17 +76,18 @@
         const resultDiv = document.getElementById('result');
 
         // Open back camera
-        async function openCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { ideal: "environment" } } // Use back camera
-                });
-                video.srcObject = stream;
-            } catch (error) {
-                console.error("Error accessing camera:", error);
-                resultDiv.textContent = "Error accessing camera.";
-            }
-        }
+       async function openCamera() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" } // Use back camera directly
+        });
+        video.srcObject = stream;
+    } catch (error) {
+        console.error("Error accessing camera:", error);
+        resultDiv.textContent = "Error accessing camera.";
+    }
+}
+
 
         // Capture image from camera
         captureButton.addEventListener('click', () => {
