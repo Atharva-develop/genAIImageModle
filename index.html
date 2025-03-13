@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Camera Capture and OCR</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        video, img, canvas {
+            width: 100%;
+            max-width: 320px;
+            height: auto;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
         #result {
             font-size: 18px;
             font-weight: bold;
@@ -16,24 +43,26 @@
             width: 320px;
             min-height: 100px;
             background-color: #f9f9f9;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
-    <h1>Capture Image from Camera and Send to API</h1>
+
+    <h1>Capture Image from Back Camera and Extract Text</h1>
     
     <!-- Video stream -->
-    <video id="video" width="320" height="240" autoplay></video>
+    <video id="video" autoplay></video>
     
     <!-- Capture and Upload Buttons -->
     <button id="capture">Capture</button>
     <button id="upload" style="display: none;">Upload</button>
     
     <!-- Canvas to hold the captured image -->
-    <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+    <canvas id="canvas" style="display: none;"></canvas>
     
     <!-- Display captured image -->
-    <img id="preview" style="display: none; width: 320px; height: 240px;" />
+    <img id="preview" style="display: none;" />
     
     <!-- Display extracted text -->
     <div id="result">Extracted text will appear here...</div>
@@ -46,19 +75,24 @@
         const preview = document.getElementById('preview');
         const resultDiv = document.getElementById('result');
 
-        // Open camera
+        // Open back camera
         async function openCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: "environment" } } // Use back camera
+                });
                 video.srcObject = stream;
             } catch (error) {
                 console.error("Error accessing camera:", error);
+                resultDiv.textContent = "Error accessing camera.";
             }
         }
 
         // Capture image from camera
         captureButton.addEventListener('click', () => {
             const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             // Show captured image
@@ -106,5 +140,6 @@
         // Start camera when the page loads
         openCamera();
     </script>
+
 </body>
 </html>
