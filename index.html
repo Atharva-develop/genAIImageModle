@@ -1,37 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Camera Capture and OCR</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f4f4f9;
-            color: #333;
-        }
-        video, img, canvas {
-            width: 100%;
-            max-width: 320px;
-            height: auto;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-        button {
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-right: 5px;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
         #result {
             font-size: 18px;
             font-weight: bold;
@@ -43,29 +17,59 @@
             width: 320px;
             min-height: 100px;
             background-color: #f9f9f9;
+        }
+
+        #AIResult {
+            font-size: 16px;
+            margin-top: 10px;
+            color: #007bff;
+        }
+
+        video,
+        img {
+            border: 1px solid #ccc;
             border-radius: 8px;
+            width: 320px;
+            height: 240px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-right: 5px;
+        }
+
+        button:hover {
+            background-color: #218838;
         }
     </style>
 </head>
-<body>
 
-    <h1>Capture Image from Back Camera and Extract Text</h1>
-    
+<body>
+    <h1>Capture Image from Camera and Send to API</h1>
+
     <!-- Video stream -->
     <video id="video" autoplay></video>
-    
+
     <!-- Capture and Upload Buttons -->
     <button id="capture">Capture</button>
     <button id="upload" style="display: none;">Upload</button>
-    
+
     <!-- Canvas to hold the captured image -->
     <canvas id="canvas" style="display: none;"></canvas>
-    
+
     <!-- Display captured image -->
     <img id="preview" style="display: none;" />
-    
+
     <!-- Display extracted text -->
     <div id="result">Extracted text will appear here...</div>
+    <div id="AIResult">AI results will appear here...</div>
 
     <script>
         const video = document.getElementById('video');
@@ -74,26 +78,23 @@
         const uploadButton = document.getElementById('upload');
         const preview = document.getElementById('preview');
         const resultDiv = document.getElementById('result');
+        const AIResult = document.getElementById('AIResult');
 
         // Open back camera
-       async function openCamera() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" } // Use back camera directly
-        });
-        video.srcObject = stream;
-    } catch (error) {
-        console.error("Error accessing camera:", error);
-        resultDiv.textContent = "Error accessing camera.";
-    }
-}
-
+        async function openCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+            }
+        }
 
         // Capture image from camera
         captureButton.addEventListener('click', () => {
             const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             // Show captured image
@@ -105,7 +106,7 @@
             uploadButton.style.display = 'inline';
         });
 
-        // Upload captured image to API
+        // Upload captured image to OCR API
         uploadButton.addEventListener('click', () => {
             canvas.toBlob((blob) => {
                 const myHeaders = new Headers();
@@ -122,14 +123,16 @@
                     redirect: "follow"
                 };
 
-                // Send the file to the API
                 fetch("https://api.ocr.space/parse/image", requestOptions)
                     .then((response) => response.json())
                     .then((result) => {
                         console.log(result);
-                        // Extract and show the "ParsedText" value
                         const parsedText = result?.ParsedResults?.[0]?.ParsedText || "No text detected";
                         resultDiv.textContent = parsedText;
+
+                        if (parsedText !== "No text detected") {
+                            getAIResponse(parsedText);
+                        }
                     })
                     .catch((error) => {
                         console.error("Error:", error);
@@ -138,9 +141,48 @@
             }, "image/png");
         });
 
+        // Function to get AI response using Gemini API
+        function getAIResponse(question) {
+            const myHeaders = new Headers();
+            myHeaders.append("Content-Type", "application/json");
+
+            const raw = JSON.stringify({
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": "tell me about: " + question
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            const requestOptions = {
+                method: "POST",
+                headers: myHeaders,
+                body: raw,
+                redirect: "follow"
+            };
+
+            fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyC_ZT9fLzty2ly8BTbJtYxIrkqNq_DXz7s", requestOptions)
+                .then((response) => response.json())
+                .then((result) => {
+                    const answerText = result?.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI";
+                    console.log(answerText);
+
+                    // Show AI response
+                    AIResult.textContent = answerText;
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    AIResult.textContent = "Error getting AI response.";
+                });
+        }
+
         // Start camera when the page loads
         openCamera();
     </script>
-
 </body>
+
 </html>
